@@ -1,15 +1,14 @@
-let radii;//Define an array and use it to store the radii of concentric circles.
+let radii; //Define an array and use it to store the radii of concentric circles.
 let colorsList = []; // Define a two-dimensional array and use it to store the colours at each position.
 
 function setup() {
   let canvas = createCanvas(windowWidth, windowHeight); // Create a canvas that fills the window
-  canvas.style('display', 'block');// Set the display of the canvas to 'block' to avoid layout confusion of the graphics
-  
+  canvas.style("display", "block"); // Set the display of the canvas to 'block' to avoid layout confusion of the graphics
 
   // Initialize grid width, height and size of hexagons
   gridWidth = windowWidth;
   gridHeight = windowHeight;
-  hexagonSize = windowWidth/5;
+  hexagonSize = windowWidth / 5;
   // Set background color
   background(4, 81, 123);
   // Set angle mode to degrees
@@ -18,11 +17,16 @@ function setup() {
   // Initialize a set of redii for concentric circles
   radii = [hexagonSize * 0.4, hexagonSize * 0.25, hexagonSize * 0.1];
   redraw();
+  translate(width / 2, height / 2); // Move the coordinate system to the center of the canvas
+  rotate(15); // Rotate the entire canvas 15 degrees to fit the design of the original image
+  stroke(255); // Set the stroke color to white
+  noFill();
+  makeGrid(); // Use the makeGrid function
 }
 
 // Adjust the size of the canvas when the window is resized
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  setup();
 }
 
 // Define a function to draw six white dots with orange and brown edges at the vertices of the hexagon
@@ -34,7 +38,7 @@ function drawTwistedLine(cX, cY, r, col, row) {
   fill(colors[0]);
 
   for (let a = 0; a < 360; a += 60) {
-    // Calculate current vertice’s coordinates. 
+    // Calculate current vertice’s coordinates.
     let x1 = cX + r * cos(a);
     let y1 = cY + r * sin(a);
 
@@ -52,22 +56,21 @@ function drawTwistedLine(cX, cY, r, col, row) {
     ellipse(x1, y1, r * 0.1, r * 0.1); // Draw white dotted circles
     pop();
 
-
     // Draw a hexagonal honeycomb grid of twisted lines
     // Calculate the vertex coordinates of the immediately preceding vertex
     let x2 = cX + r * cos(a + 60);
     let y2 = cY + r * sin(a + 60);
 
     // Divide the line between the vertex of the hexagon and the immediately adjacent vertex into two segments, and draw two interlaced Bezier curves for each segment
-    let segments = 2; 
+    let segments = 2;
     for (let i = 0; i < segments; i++) {
       // Calculate the starting point coordinates of each line segment
-      let startX = lerp(x1, x2, i / segments);// The X coordinate of the starting point of the current segment
-      let startY = lerp(y1, y2, i / segments);// The X coordinate of the starting point of the current segment
+      let startX = lerp(x1, x2, i / segments); // The X coordinate of the starting point of the current segment
+      let startY = lerp(y1, y2, i / segments); // The X coordinate of the starting point of the current segment
 
       // Calculate the end point coordinates of each line segment
-      let endX = lerp(x1, x2, (i + 1) / segments);// X coordinate of the end point of the current segment
-      let endY = lerp(y1, y2, (i + 1) / segments);// Y coordinate of the end point of the current segment
+      let endX = lerp(x1, x2, (i + 1) / segments); // X coordinate of the end point of the current segment
+      let endY = lerp(y1, y2, (i + 1) / segments); // Y coordinate of the end point of the current segment
 
       // Calculate the midpoint coordinates of each line segment to determine the control points of the Bezier curve
       let midX = (startX + endX) / 2;
@@ -81,22 +84,34 @@ function drawTwistedLine(cX, cY, r, col, row) {
       let ControlPoint2x = midX - (startY - endY) * 0.3; // Control the X coordinate of point 2 and adjust 0.3 to change the distance of the control point
       let ControlPoint2y = midY - (endX - startX) * 0.3; // Control the Y coordinate of point 2 and adjust 0.3 to change the distance of the control point
 
-
       // Draw the first Bezier curve
       beginShape();
-      vertex(startX, startY);// Define start points
-      bezierVertex(ControlPoint1x, ControlPoint1y, ControlPoint2x, ControlPoint2y, endX, endY);
+      vertex(startX, startY); // Define start points
+      bezierVertex(
+        ControlPoint1x,
+        ControlPoint1y,
+        ControlPoint2x,
+        ControlPoint2y,
+        endX,
+        endY
+      );
       //Define two control points and end points of another Bezier curve,
       endShape();
 
       // Draw the second Bezier curve
       beginShape();
-      vertex(startX, startY);// Define the start points
-      bezierVertex(ControlPoint2x, ControlPoint2y, ControlPoint1x, ControlPoint1y, endX, endY);
+      vertex(startX, startY); // Define the start points
+      bezierVertex(
+        ControlPoint2x,
+        ControlPoint2y,
+        ControlPoint1x,
+        ControlPoint1y,
+        endX,
+        endY
+      );
       // Define two control points and end points of another Bezier curve,
       // The order of the control points of this curve is opposite to that of the previous curve to form a staggered line
       endShape();
-
     }
   }
 }
@@ -105,29 +120,34 @@ function drawTwistedLine(cX, cY, r, col, row) {
 function drawConcentricCirclesAndDots(cX, cY, radii, col, row) {
   // Get the color list of the current location
   let colors = getColorsForPosition(row, col);
-  new ConcentricCirclesAndDots(cX, cY, radii, colors).draw();
+
+  var angle = random([15, 30, 45]);
+
+  new ConcentricCirclesAndDots(cX, cY, radii, colors, angle).draw();
 }
 
 // Define a class to draw dotted circles
 class DottedCircle {
-  constructor(cX, cY, r, dotRadius, color) {
+  constructor(cX, cY, r, dotRadius, color, angle) {
     this.cX = cX;
     this.cY = cY;
     this.r = r;
     this.dotRadius = dotRadius;
     this.color = color;
+    this.angle = angle;
   }
 
   draw() {
     push();
     stroke(this.color);
 
-    //Take the center of the hexagon as the center of the ring, 
+    //Take the center of the hexagon as the center of the ring,
     //and draw a small dot every 15 degrees to form a ring
-    for (let a = 0; a < 360; a += 15) {
+    for (let a = 0; a < 360; a += this.angle) {
       // Use trigonometric functions to calculate the coordinates of the current small circle
       let x = this.cX + this.r * cos(a);
       let y = this.cY + this.r * sin(a);
+
       ellipse(x, y, this.dotRadius, this.dotRadius);
     }
     pop();
@@ -136,18 +156,23 @@ class DottedCircle {
 
 // Define a class to draw concentric circles and dotted rings
 class ConcentricCirclesAndDots {
-  constructor(cX, cY, radii, colors) {
+  constructor(cX, cY, radii, colors, angle) {
     this.cX = cX;
     this.cY = cY;
     this.radii = radii;
     this.colors = colors;
+
+    this.angle = angle;
   }
 
-// Using the center of the hexagon as the center of the circle, 
-// draw three concentric circles and the small dots between the concentric circles
+  // Using the center of the hexagon as the center of the circle,
+  // draw three concentric circles and the small dots between the concentric circles
   draw() {
     push();
 
+    rectMode(CENTER);
+
+    fill(255);
     // Loop through the three sets of data in the radius array
     // and draw concentric circles using the stored colours
     for (let i = 0; i < this.radii.length; i++) {
@@ -155,16 +180,63 @@ class ConcentricCirclesAndDots {
       ellipse(this.cX, this.cY, this.radii[i] * 2, this.radii[i] * 2);
     }
 
+    var randomInnerCirclesAmount = random([0, 1, 2, 3, 4]);
+    if (randomInnerCirclesAmount > 0) {
+      for (let j = 0; j < randomInnerCirclesAmount; j++) {
+        var c = j % 2 === 1 ? this.colors[2] : this.colors[1];
+        var r = map(j, 0, 4, this.radii[0], this.radii[2]);
+
+        fill(c);
+        ellipse(this.cX, this.cY, r, r);
+      }
+    }
+
+    fill(this.colors[1]);
+    noStroke();
+    beginShape();
+
+    vertex(this.cX, this.cY - this.radii[2] * 0.8);
+    vertex(this.cX + this.radii[2] * 0.2, this.cY - this.radii[2] * 0.2);
+    vertex(this.cX + this.radii[2] * 0.8, this.cY);
+    vertex(this.cX + this.radii[2] * 0.2, this.cY + this.radii[2] * 0.2);
+    vertex(this.cX, this.cY + this.radii[2] * 0.8);
+    vertex(this.cX - this.radii[2] * 0.2, this.cY + this.radii[2] * 0.2);
+    vertex(this.cX - this.radii[2] * 0.8, this.cY);
+    vertex(this.cX - this.radii[2] * 0.2, this.cY - this.radii[2] * 0.2);
+
+    endShape();
+
     // Calculate the radii of three rings formed by small dots
-    let r1 = (this.radii[0] + this.radii[1]) / 2 * 0.85;
+    let r1 = ((this.radii[0] + this.radii[1]) / 2) * 0.85;
     let r2 = r1 * 1.15;
-    let r3 = r2 * 1.15
+    let r3 = r2 * 1.15;
 
     // Draw dotted rings
-    new DottedCircle(this.cX, this.cY, r1, r1 * 0.1, this.colors[4]).draw();
-    new DottedCircle(this.cX, this.cY, r2, r1 * 0.12, this.colors[5]).draw();
-    new DottedCircle(this.cX, this.cY, r3, r1 * 0.13, this.colors[6]).draw();
-    
+    new DottedCircle(
+      this.cX,
+      this.cY,
+      r1,
+      r1 * 0.1,
+      this.colors[4],
+      this.angle
+    ).draw();
+    new DottedCircle(
+      this.cX,
+      this.cY,
+      r2,
+      r1 * 0.12,
+      this.colors[5],
+      this.angle
+    ).draw();
+    new DottedCircle(
+      this.cX,
+      this.cY,
+      r3,
+      r1 * 0.13,
+      this.colors[6],
+      this.angle
+    ).draw();
+
     pop();
   }
 }
@@ -174,11 +246,11 @@ class ConcentricCirclesAndDots {
 function getColorsForPosition(row, col) {
   // If the current row does not store colors, create a new empty list to store the colors
   if (!colorsList[row]) colorsList[row] = [];
-  
+
   // If there is no color list at the current location, a set of colors is randomly generated and stored
   if (!colorsList[row][col]) {
     let colorsForThisSet = [];
-    
+
     // Add color to wrapped thread
     colorsForThisSet.push(color(random(255), random(255), random(255)));
 
@@ -200,39 +272,32 @@ function getColorsForPosition(row, col) {
   return colorsList[row][col];
 }
 
-
 function makeGrid() {
-  let count = 0;// init counter
-  
+  let count = 0; // init counter
+
   // Adjust the starting position of the entire grid so that it fully displays on the canvas
   let offsetX = -width / 2;
   let offsetY = -height / 2;
 
   // Draw the base grid using a hexagonal honeycomb grid frame
-  for (let y = offsetY *1.4, row = 0; y < gridHeight; y += hexagonSize / 2.3, row++) {
-    for (let x = offsetX *1.2, col = 0; x < gridWidth; x += hexagonSize * 1.5, col++) {
+  for (
+    let y = offsetY * 1.4, row = 0;
+    y < gridHeight;
+    y += hexagonSize / 2.3, row++
+  ) {
+    for (
+      let x = offsetX * 1.2, col = 0;
+      x < gridWidth;
+      x += hexagonSize * 1.5, col++
+    ) {
       let hexCenterX = x + hexagonSize * (count % 2 == 0) * 0.75;
       let hexCenterY = y;
 
-      // Call the drawTwistedLine function to draw twisted lines 
+      // Call the drawTwistedLine function to draw twisted lines
       drawTwistedLine(hexCenterX, hexCenterY, hexagonSize / 2, col, row);
       // Call drawConcentricCircles function to draw concentric circles and dotted rings
       drawConcentricCirclesAndDots(hexCenterX, hexCenterY, radii, col, row);
     }
-    count++;// increment every row
+    count++; // increment every row
   }
 }
-
-
-function draw() {
-  background(4, 81, 123);//Set canvas color to dark blue
-  translate(width / 2, height / 2); // Move the coordinate system to the center of the canvas
-  rotate(15);// Rotate the entire canvas 15 degrees to fit the design of the original image
-  stroke(255);// Set the stroke color to white
-  noFill();
-  makeGrid();// Use the makeGrid function
-}
-
-stroke(255);// Set the stroke color to white
-noFill();
-makeGrid();// Use the makeGrid function
